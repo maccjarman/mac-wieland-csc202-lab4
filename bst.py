@@ -63,6 +63,53 @@ def lookup(bst: BinarySearchTree, value: Any) -> bool:
         
     return lookup_helper(bst.tree)
         
+def delete(bst: BinarySearchTree, value: Any) -> BinarySearchTree:
+    def delete_helper(node: BinTree, value: Any) -> BinTree:
+        if node is None:
+            return None #if there's no value, there's nothing to delete
+        
+        #if the value to be deleted is smaller than the node's value, go to the left subtree
+        if bst.comes_before(value, node.value):
+            node.left = delete_helper(node.left, value)
+
+        #if the value to be deleted is greater than the node's value, go to the right subtree
+        elif bst.comes_before(node.value, value):
+            node.right = delete_helper(node.right, value)
+
+        #once we find the node to delete
+        else:
+            #leaf node
+            if node.left is None and node.right is None:
+                return None
+            
+            #node has one child
+            elif node.left is None:
+                return node.right
+            elif node.right is None:
+                return node.left
+
+            #node has two children
+            else:
+                #find smallest node in right subtree
+                successor = find_min(node.right)
+
+                #replace current node's value with successor's value
+                node.value = successor.value
+                
+                #delete successor from right subtree
+                node.right = delete_helper(node.right, successor.value)
+
+        return node #return modified node
+    
+    def find_min(node: BinTree) -> Node:
+        current = node
+        while current and current.left != None:
+            current = current.left
+        return current
+    
+    new_tree = delete_helper(bst.tree, value)
+    return BinarySearchTree(bst.comes_before, new_tree)
+    
 #custom comparison function for integers for testing
 def compare_value(a: Any, b: Any) -> bool:
     return a < b
@@ -102,5 +149,22 @@ class Test(unittest.TestCase):
 
         self.assertEqual(lookup(empty_bst, 10), False)
         
+    def test_delete(self):
+        bst = BinarySearchTree(compare_value, None)
+        bst = insert(bst, 10)
+        bst = insert(bst, 5)
+        bst = insert(bst, 15)
+        bst = insert(bst, 3)
+        bst = insert(bst, 7)
+
+        #leaf node
+        bst = delete(bst, 3)
+        self.assertEqual(lookup(bst, 3), False)
+        
+        #one child
+        bst = delete(bst, 7)
+        self.assertEqual(lookup(bst, 7), False)
+
+
 if __name__ == "__main__":
     unittest.main()
